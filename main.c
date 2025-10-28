@@ -128,7 +128,7 @@ void get_key_val(char* str, char** key, char** val) {
 }
 
 bool parse_short_long_form(char* str, const char* s, const char* l, bool relaxed) {
-	if ((string_starts_with(str, s) && strlen(str) == 1) ||
+	if ((string_starts_with(str, s) && strlen(str) == strlen(s)) ||
 		(string_starts_with(str, l) && (relaxed || (strlen(str) == strlen(l))))) {
 		return true;
 	}
@@ -140,14 +140,21 @@ void set_state(char* key, char* val) {
 	
 	if (val == nullptr) {
 		if (parse_short_long_form(key, "h", "help", true)) {
-			state.mode = HELP;		
+			state.mode = HELP;
+			goto set_state_ret;
 		}
 	} else {
 		if (parse_short_long_form(key, "t", "time", false)) {
 			state.time = atoi(val);
+			goto set_state_ret;
+		}
+		if (parse_short_long_form(key, "pv", "process_variable", false)) {
+			state.pv = val;
+			goto set_state_ret;
 		}
 	}
-	
-
+	set_state_ret:
+	// possible future callbacks etc.
+	return;
 }
 
