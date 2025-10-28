@@ -20,8 +20,16 @@ struct state {
 	int time;
 	int rows;
 	int cols;
+	float refresh_period; // seconds
+} const state_default = {
+	0,
+	60,
+	0,
+	0,
+	1.0
 };
 
+typedef struct state State;
 
 void clear_stdout(void);
 void draw_help(void);
@@ -35,7 +43,7 @@ void set_state(char* key, char* val);
 
 bool parse_short_long_form(char* str, const char* s, const char* l, bool relaxed);
 
-struct state state = {};
+State state = state_default;
 
 
 int main(int argc, char **argv) {
@@ -56,11 +64,10 @@ int main(int argc, char **argv) {
 	else {
 		while(true) {
 			clear_stdout();
-			for (int i=0; i<state.cols-state.time; i++) {
-				printf("%d", state.time);
-			}
+			
+			
 			printf("\n");
-			sleep(0.5);
+			sleep(state.refresh_period);
 		}
 	}
 
