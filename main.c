@@ -5,9 +5,9 @@
 #include <stdlib.h> 
 #include <sys/ioctl.h>
 
-
+#include "state.h"
 #include "pv_access.h"
-
+#include "draw.h"
 
 enum MODES {
 	WATCH,
@@ -15,24 +15,7 @@ enum MODES {
 };
 
 
-struct state {
-	char mode;
-	int time;
-	int rows;
-	int cols;
-	float refresh_period; // seconds
-} const state_default = {
-	0,
-	60,
-	0,
-	0,
-	1.0
-};
-
-typedef struct state State;
-
 void clear_stdout(void);
-void draw_help(void);
 
 int get_window_state(struct state* s);
 
@@ -59,20 +42,21 @@ int main(int argc, char **argv) {
 	parse_args(argc, argv);
 
 	if (state.mode == HELP) {
-		draw_help();
+		draw_help(&state);
 	}
 	else {
 		while(true) {
 			clear_stdout();
-			
-			
-			printf("\n");
+
+			draw_graph(&state);
+	
 			sleep(state.refresh_period);
 		}
 	}
 
 	return 0;
 }
+
 
 int get_window_state(struct state* s) {
 	struct winsize w = {};
@@ -87,10 +71,6 @@ int get_window_state(struct state* s) {
 	s->rows = w.ws_row;
 	s->cols = w.ws_col;
 	return 0;
-}
-
-void clear_stdout() {
-	printf("\e[1;1H\e[2J"); 	
 }
 
 
@@ -171,6 +151,3 @@ void set_state(char* key, char* val) {
 
 }
 
-void draw_help() {
-	printf("EPICSWATCH\tHelp\t2025\n");
-}
