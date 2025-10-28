@@ -1,0 +1,1 @@
+gcc -std=c23 -D_POSIX_C_SOURCE=200112L -Wall -Wpedantic -Wextra -I$EPICS_BASE/include -I$EPICS_BASE/include/os/Linux -I$EPICS_BASE/include/compiler/gcc -I./include -L$EPICS_BASE/lib/linux-x86_64 main.c src/pv_access.c -o epicswatch -lca -lCom

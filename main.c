@@ -1,7 +1,13 @@
+#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h> 
+#include <sys/ioctl.h>
+
+
+#include "pv_access.h"
+
 
 enum MODES {
 	WATCH,
@@ -12,11 +18,15 @@ enum MODES {
 struct state {
 	char mode;
 	int time;
+	int rows;
+	int cols;
 };
 
 
 void clear_stdout(void);
 void draw_help(void);
+
+int get_window_state(struct state* s);
 
 void parse_args(int argc, char** argv);
 bool string_starts_with(char* str, const char* seq);
@@ -29,6 +39,15 @@ struct state state = {};
 
 
 int main(int argc, char **argv) {
+	int win_succ = get_window_state(&state);
+	
+	if (win_succ != 0) {
+		return -1;
+	}
+
+	float test = get_pv("test:float");
+	printf("testpv %f\n", test);
+
 	parse_args(argc, argv);
 
 	if (state.mode == HELP) {
@@ -37,7 +56,10 @@ int main(int argc, char **argv) {
 	else {
 		while(true) {
 			clear_stdout();
-			printf("%d\n", state.time);
+			for (int i=0; i<state.cols-state.time; i++) {
+				printf("%d", state.time);
+			}
+			printf("\n");
 			sleep(0.5);
 		}
 	}
@@ -45,6 +67,20 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
+int get_window_state(struct state* s) {
+	struct winsize w = {};
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != 0) {
+		int errnoioctl = errno;
+		printf("ERROR: ioctl failed upon retrieving win size!\n");
+		printf("errno: %d\n", errnoioctl);
+		
+		return -1;
+	}
+	
+	s->rows = w.ws_row;
+	s->cols = w.ws_col;
+	return 0;
+}
 
 void clear_stdout() {
 	printf("\e[1;1H\e[2J"); 	
