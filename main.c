@@ -103,6 +103,10 @@ void parse_args(int argc, char **argv) {
 			sp = 1;
 		}
 
+		if (sp == 0) {
+			continue;
+		}
+
 		char* key = nullptr; 
 		char* val = nullptr;
 		
