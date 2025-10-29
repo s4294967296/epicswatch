@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <cadef.h>
 #include "pv_access.h"
-
 
 float get_pv(const char* pv) {
     const char *pvName = pv;
@@ -45,13 +41,13 @@ float get_pv(const char* pv) {
 }
 
 
-int query_data(const char* pv, float data[], int size, int pos) {
-	data[pos] = get_pv(pv);
+int query_data(State* state, float data[]) {
+	data[state->data_pos] = get_pv(state->pv);
 	
-	if (pos == (size - 1)) {
+	if ((state->data_pos + 1) == (state->data_size)) {
 		return 0;
 	} else {
-		return pos + 1;
+		return state->data_pos + 1;
 	}
 }
 

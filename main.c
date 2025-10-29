@@ -15,7 +15,7 @@ enum MODES {
 };
 
 
-int get_window_state(struct state* s);
+int get_window_state(State* s);
 
 void parse_args(int argc, char** argv);
 bool string_starts_with(char* str, const char* seq);
@@ -24,7 +24,16 @@ void set_state(char* key, char* val);
 
 bool parse_short_long_form(char* str, const char* s, const char* l, bool relaxed);
 
-State state = state_default;
+State state = {
+	0,			// mode
+	60,			// time
+	0,			// rows
+	0,			// cols
+	1,		// refresh_period
+	"NULL",		// pv
+	0,			// data_pos
+	0			// data_size
+};
 
 
 int main(int argc, char **argv) {
@@ -38,7 +47,8 @@ int main(int argc, char **argv) {
 
 	int data_size = state.cols - 10;
 	float data[data_size] = {};
-	int pos = 0;
+	int data_pos = 0;
+	state.data_size = data_size;
 
 	if (state.mode == HELP) {
 		draw_help(&state);
@@ -47,7 +57,7 @@ int main(int argc, char **argv) {
 		while(true) {
 			clear_stdout();
 			
-			pos = query_data(state.pv, data, data_size, pos);
+			state.data_pos = query_data(&state, data);
 
 			draw_graph(&state, data);
 	
@@ -59,7 +69,7 @@ int main(int argc, char **argv) {
 }
 
 
-int get_window_state(struct state* s) {
+int get_window_state(State* s) {
 	struct winsize w = {};
 	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != 0) {
 		int errnoioctl = errno;
