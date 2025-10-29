@@ -4,7 +4,7 @@
 #include "pv_access.h"
 
 
-float get_pv(const char *pv) {
+float get_pv(const char* pv) {
     const char *pvName = pv;
     chid pvChid;
     double value;
@@ -39,10 +39,19 @@ float get_pv(const char *pv) {
 
     ca_pend_io(1.0);
 
-    printf("PV %s value: %f\n", pvName, value);
-
     ca_clear_channel(pvChid);
     ca_context_destroy();
     return value;
+}
+
+
+int query_data(const char* pv, float data[], int size, int pos) {
+	data[pos] = get_pv(pv);
+	
+	if (pos == (size - 1)) {
+		return 0;
+	} else {
+		return pos + 1;
+	}
 }
 

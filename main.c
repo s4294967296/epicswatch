@@ -15,8 +15,6 @@ enum MODES {
 };
 
 
-void clear_stdout(void);
-
 int get_window_state(struct state* s);
 
 void parse_args(int argc, char** argv);
@@ -36,10 +34,11 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
-	float test = get_pv("test:float");
-	printf("testpv %f\n", test);
-
 	parse_args(argc, argv);
+
+	int data_size = state.cols - 10;
+	float data[data_size] = {};
+	int pos = 0;
 
 	if (state.mode == HELP) {
 		draw_help(&state);
@@ -47,8 +46,10 @@ int main(int argc, char **argv) {
 	else {
 		while(true) {
 			clear_stdout();
+			
+			pos = query_data(state.pv, data, data_size, pos);
 
-			draw_graph(&state);
+			draw_graph(&state, data);
 	
 			sleep(state.refresh_period);
 		}

@@ -7,6 +7,7 @@
 
 float get_pv(const char* pv);
 
+int query_data(const char* pv, float data[], int size, int pos);
 
 
 #endif
