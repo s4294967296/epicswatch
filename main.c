@@ -163,6 +163,10 @@ void set_state(char* key, char* val) {
 			state.pv = val;
 			goto set_state_ret;
 		}
+		if (parse_short_long_form(key, "p", "period", false)) {
+			state.refresh_period = atof(val);
+			goto set_state_ret;
+		}
 	}
 	set_state_ret:
 	// possible future callbacks etc.

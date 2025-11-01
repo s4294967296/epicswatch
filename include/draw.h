@@ -95,8 +95,8 @@ void draw_data(char* buff, State* state, float data[]) {
 	
 	for (int i = 0; i < len; i++) {
 		pos--;
-		if (pos == 0) {
-			pos = len;
+		if (pos <= 0) {
+			pos = len - 1;
 		}
 
 		float bin = (data[pos] - min) / ((max - min) / graph_rows);
