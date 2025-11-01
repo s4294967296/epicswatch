@@ -50,6 +50,9 @@ int main(int argc, char **argv) {
 	int data_pos = 0;
 	state.data_size = data_size;
 
+	int sec = (int)state.refresh_period;
+	struct timespec refresh_period = {sec, (int)((state.refresh_period - sec)*1e9)};
+	
 	if (state.mode == HELP) {
 		draw_help(&state);
 	}
@@ -60,8 +63,8 @@ int main(int argc, char **argv) {
 			state.data_pos = query_data(&state, data);
 
 			draw_graph(&state, data);
-	
-			sleep(state.refresh_period);
+			
+			nanosleep(&refresh_period, nullptr);
 		}
 	}
 

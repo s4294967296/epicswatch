@@ -93,7 +93,7 @@ void draw_data(char* buff, State* state, float data[]) {
 	}
 
 	
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < len - 1; i++) {
 		pos--;
 		if (pos <= 0) {
 			pos = len - 1;
