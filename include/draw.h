@@ -27,7 +27,7 @@ void draw_graph(State* state, float data[]);
 void draw_header(char* buff, State* state);
 void draw_bounds(char* buff, State* state);
 void draw_data(char* buff, State* state, float data[]);
-void draw_x_axis(char* buff, State* state, float min, float max);
+void draw_x_axis(char* buff, State* state);
 void draw_y_axis(char* buff, State* state, float min, float max);
 
 
@@ -101,6 +101,7 @@ void draw_data(char* buff, State* state, float data[]) {
 	}
 
 	draw_y_axis(buff, state, min, max);
+	draw_x_axis(buff, state);
 
 	
 	for (int i = 0; i < len - 1; i++) {
@@ -117,8 +118,79 @@ void draw_data(char* buff, State* state, float data[]) {
 }
 
 
-void draw_x_axis(char* buff, State* state, float min, float max) {
+void draw_x_axis(char* buff, State* state) {
+	const int lbl_width = 5;
+	const int timebase_lbl_width = 5;
 
+	// let the timebase_flag determine the label formatting. The label is
+	//	displayed like this:
+	//	xx:yy
+	//	Where xx and yy can correspond to seconds, mins, hours or days:
+	//	mm:ss --> timebase_flag = 0
+	//	hh:mm --> timebase_flag = 1
+	//  dd:hh --> timebase_flag = 2
+	//
+	int timebase_flag = 0;
+	char timebase_lbl[timebase_lbl_width + 1];
+	snprintf(timebase_lbl, timebase_lbl_width + 1, "mm:ss");
+	
+	const float max_duration = (state->cols - left_edge_offset) * state->refresh_period;
+	if (max_duration > (3600 - 1)) {
+		timebase_flag += 1;
+		snprintf(timebase_lbl, timebase_lbl_width + 1, "hh:mm");
+	}
+	if (max_duration > (3600 * 24 - 1)) {
+		snprintf(timebase_lbl, timebase_lbl_width + 1, "dd:hh");
+		timebase_flag += 1;
+	}
+	
+
+	unsigned int time_small = 0;
+	unsigned int time_large = 0;
+	
+
+	char lbl[lbl_width + 1];
+
+	int tick_row = max_rows - bottom_edge_offset + 2;
+	int tick_col = left_edge_offset + 4;
+	int tick_label_position = 0;
+
+	// timebase lbl
+	strncpy(buff + state->cols * tick_row + left_edge_offset + 2, timebase_lbl, timebase_lbl_width);
+	
+	while (tick_col < state->cols - (left_edge_offset + lbl_width)) {
+		memset(lbl, 0, lbl_width);
+
+		// lbl_width / 2 accounts for centering the time on ':' of label
+		unsigned int time = (tick_col + lbl_width / 2) * state->refresh_period;
+		
+		switch (timebase_flag) {
+			case 0: {
+				time_large = time / 60;
+				time_small = time % 60;
+				break;
+			}
+			case 1: {
+				time_large = time / 3600;
+				time_small = (time % 3600) / 60;
+				break;
+			}
+			case 2: {
+				time_large = time / (3600 * 24);
+				time_small = (time % (3600 * 24)) / 3600;
+				break;
+			}
+			default: {
+				// TODO: error 
+			}
+		}
+		tick_label_position = state->cols * tick_row + (tick_col + left_edge_offset + 3);
+		snprintf(lbl, lbl_width + 1, "%02u:%02u", time_large, time_small);
+
+		strncpy(buff + tick_label_position, lbl, lbl_width);
+
+		tick_col += (lbl_width + tick_gap);
+	}
 }
 
 
