@@ -30,7 +30,6 @@ void draw_data(char* buff, State* state, float data[]);
 void draw_x_axis(char* buff, State* state);
 void draw_y_axis(char* buff, State* state, float min, float max);
 
-
 /////////////////////
 // lower level function prototypes
 void clear_stdout(void);
@@ -38,6 +37,7 @@ void clear_stdout(void);
 void draw_hline(char* buff, int pos, int times, const char c);
 void draw_vline(char* buff, int pos, int cols, int times, const char c);
 
+void draw_grid(char* buff, State* state, const char c);
 /////////////////////
 // high level function implementation
 void draw_help(State* state) {
@@ -57,6 +57,7 @@ void draw_graph(State* state, float data[]) {
 	draw_header(buff, state);
 	draw_bounds(buff, state);
 
+	draw_grid(buff, state, '.');
 	draw_data(buff, state, data);
 
 	for (int i = 0; i < buffsize; i++) {
@@ -254,6 +255,19 @@ void draw_vline(char* buff, int pos, int cols, int times, const char c) {
 	buff[pos + times*cols] = c;
 
 	draw_vline(buff, pos, cols, times - 1, c);
+}
+
+
+void draw_grid(char* buff, State* state, const char c) {
+	// TODO: somehow encapsulate this into state.. this is due to lbl size
+	int additional_gap_horizontal = 5;	
+	for (int i = left_edge_offset;// + additional_gap_horizontal + tick_gap;
+		 i < state->cols; 
+		 i += tick_gap + additional_gap_horizontal) {
+		for (int j = top_edge_offset; j < state->rows; j += tick_gap + 1) {
+			buff[state->cols * j + i] = c;
+		}
+	}
 }
 
 

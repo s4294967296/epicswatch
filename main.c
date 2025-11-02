@@ -58,6 +58,13 @@ int main(int argc, char **argv) {
 	}
 	else {
 		while(true) {
+
+			win_succ = get_window_state(&state);
+	
+			if (win_succ != 0) {
+				return -1;
+			}
+			
 			clear_stdout();
 			
 			state.data_pos = query_data(&state, data);
