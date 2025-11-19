@@ -4,10 +4,13 @@
 #include <string.h>
 #include <stdlib.h> 
 #include <sys/ioctl.h>
+#include <stdbool.h>
 
 #include "state.h"
 #include "pv_access.h"
 #include "draw.h"
+
+#define nullptr NULL
 
 enum MODES {
 	WATCH,
