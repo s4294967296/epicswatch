@@ -49,7 +49,8 @@ int main(int argc, char **argv) {
 	parse_args(argc, argv);
 
 	int data_size = state.cols - 10;
-	float data[data_size] = {};
+	float data[data_size];
+	memset(data, 0, data_size * sizeof(float));
 	int data_pos = 0;
 	state.data_size = data_size;
 
@@ -83,7 +84,7 @@ int main(int argc, char **argv) {
 
 
 int get_window_state(State* s) {
-	struct winsize w = {};
+	struct winsize w = {0, 0, 0, 0}; // ws_row, _col, _xpixel, _ypixel
 	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != 0) {
 		int errnoioctl = errno;
 		printf("ERROR: ioctl failed upon retrieving win size!\n");
