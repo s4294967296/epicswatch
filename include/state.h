@@ -12,4 +12,22 @@ typedef struct {
 	int data_size;
 } State;
 
+typedef struct {
+	int max_rows;
+	int max_graph_rows;
+	int buffsize;
+
+	int win_top_edge_offset;
+	int win_left_edge_offset;
+	int win_bottom_edge_offset;
+	int win_right_edge_offset;
+
+	int tick_gap_horizontal;
+	int tick_gap_vertical;
+	int horizontal_axis_lbl_size;
+	int vertical_axis_lbl_size;
+
+} GraphState;
+
+
 #endif

@@ -10,14 +10,34 @@
 
 //////////////////////
 // static area
-int max_rows = 0;
-int graph_rows = 0;
-int left_edge_offset = 5;
-int top_edge_offset = 2;
-int bottom_edge_offset = 5;
+GraphState graph_state = {
+	0, // max_rows
+	0, // max_graph_rows
+	0, // buffsize
+	
+	2, // win_top_edge_offset
+	5, // win_left_edge_offset
+	5, // win_bottom_edge_offset
+	0, // win_right_edge_offset
+	
+	7, // tick_gap_horizontal
+	7, // tick_gap_vertical
+	5, // horizontal_axis_lbl_size
+	1  // vertical_axis_lbl_size
+};
 
-int tick_gap = 7;
-
+static const char *help_text = 
+"EPICSWATCH Help 2025\n"
+"\n"
+"  Watch EPICS process variables and plot them in real time.\n"
+"\n"
+"\n"
+"\n"
+"\n"
+"\n"
+"\n"
+"\n"
+"\n";
 
 //////////////////////
 // high level function prototypes
@@ -38,21 +58,35 @@ void draw_hline(char* buff, int pos, int times, const char c);
 void draw_vline(char* buff, int pos, int cols, int times, const char c);
 
 void draw_grid(char* buff, State* state, const char c);
+
 /////////////////////
 // high level function implementation
 void draw_help(State* state) {
-	printf("EPICSWATCH\tHelp\t2025\n");
+	printf(help_text);
 }
 
 void draw_graph(State* state, float data[]) {
-	max_rows = state->rows < state->cols ? state->rows : state->cols;
-	max_rows -= 2; // account for header
+	if (state->rows < state->cols) {
+		graph_state.max_rows = state->rows - graph_state.win_top_edge_offset;
+	} else {
+		graph_state.max_rows = state->cols - graph_state.win_top_edge_offset;
+	}
+	
+	if (graph_state.max_rows <= 0) {
+		printf("graph_state.max_rows < 1. Returning.\n");
+		return;
+	}
 	
 
-	int buffsize = state->cols * max_rows + 1;
+	int buffsize = state->cols * graph_state.max_rows + 1;
+	if (buffsize <= 0) {
+		printf("graph_state.buffsize < 1. Returning.\n");
+		return;
+	}
+
 	char buff[buffsize];
 	memset(buff, ' ', buffsize);
-	buff[buffsize - 1] = '\0';
+	buff[buffsize ] = '\0';
 	
 	draw_header(buff, state);
 	draw_bounds(buff, state);
@@ -63,6 +97,7 @@ void draw_graph(State* state, float data[]) {
 	for (int i = 0; i < buffsize; i++) {
 		printf("%c", buff[i]);
 	}
+
 	fflush(stdout);
 }
 
@@ -74,15 +109,15 @@ void draw_header(char* buff, State* state) {
 
 void draw_bounds(char* buff, State* state) {
 	draw_hline(buff, state->cols - 1, state->cols, '-');
-	draw_hline(buff, (max_rows - 4) * state->cols - 1, state->cols, '-');
-	draw_vline(buff, state->cols + left_edge_offset, state->cols, max_rows - 6, '|');
+	draw_hline(buff, (graph_state.max_rows - 4) * state->cols - 1, state->cols, '-');
+	draw_vline(buff, state->cols + graph_state.win_left_edge_offset, state->cols, graph_state.max_rows - 6, '|');
 }
 
 void draw_data(char* buff, State* state, float data[]) {
 	int pos = state->data_pos;
 	int len = state->data_size;
 
-	graph_rows = max_rows - top_edge_offset - bottom_edge_offset;
+	graph_state.max_graph_rows = graph_state.max_rows - graph_state.win_top_edge_offset - graph_state.win_bottom_edge_offset;
 
 	float min = data[0];
 	float max = data[0];
@@ -111,8 +146,10 @@ void draw_data(char* buff, State* state, float data[]) {
 			pos = len - 1;
 		}
 
-		float bin = (data[pos] - min) / ((max - min) / graph_rows);
-		buff[state->cols * (top_edge_offset + graph_rows - (int)bin) + i + left_edge_offset + 1] = 'x';
+		float bin = (data[pos] - min) / ((max - min) / graph_state.max_graph_rows);
+		buff[
+			state->cols * (graph_state.win_top_edge_offset + graph_state.max_graph_rows - (int)bin) + i + graph_state.win_left_edge_offset + 1
+			] = 'x';
 	}
 
 
@@ -120,8 +157,12 @@ void draw_data(char* buff, State* state, float data[]) {
 
 
 void draw_x_axis(char* buff, State* state) {
-	const int lbl_width = 5;
+	const int lbl_width = graph_state.horizontal_axis_lbl_size;
 	const int timebase_lbl_width = 5;
+	if (lbl_width < timebase_lbl_width) {
+		printf("lbl_width < timebase_lbl_width. Returning.\n");
+		return;
+	}
 
 	// let the timebase_flag determine the label formatting. The label is
 	//	displayed like this:
@@ -135,7 +176,7 @@ void draw_x_axis(char* buff, State* state) {
 	char timebase_lbl[timebase_lbl_width + 1];
 	snprintf(timebase_lbl, timebase_lbl_width + 1, "mm:ss");
 	
-	const float max_duration = (state->cols - left_edge_offset) * state->refresh_period;
+	const float max_duration = (state->cols - graph_state.win_left_edge_offset) * state->refresh_period;
 	if (max_duration > (3600 - 1)) {
 		timebase_flag += 1;
 		snprintf(timebase_lbl, timebase_lbl_width + 1, "hh:mm");
@@ -152,14 +193,15 @@ void draw_x_axis(char* buff, State* state) {
 
 	char lbl[lbl_width + 1];
 
-	int tick_row = max_rows - bottom_edge_offset + 2;
-	int tick_col = left_edge_offset + 4;
+	// TODO: Magic numbers
+	int tick_row = graph_state.max_rows - graph_state.win_bottom_edge_offset + 2;
+	int tick_col = graph_state.win_left_edge_offset + 4;
 	int tick_label_position = 0;
 
 	// timebase lbl
-	strncpy(buff + state->cols * tick_row + left_edge_offset + 2, timebase_lbl, timebase_lbl_width);
+	strncpy(buff + state->cols * tick_row + graph_state.win_left_edge_offset + 2, timebase_lbl, timebase_lbl_width);
 	
-	while (tick_col < state->cols - (left_edge_offset + lbl_width)) {
+	while (tick_col < state->cols - (graph_state.win_left_edge_offset + lbl_width)) {
 		memset(lbl, 0, lbl_width);
 
 		// lbl_width / 2 accounts for centering the time on ':' of label
@@ -185,25 +227,25 @@ void draw_x_axis(char* buff, State* state) {
 				// TODO: error 
 			}
 		}
-		tick_label_position = state->cols * tick_row + (tick_col + left_edge_offset + 3);
+		tick_label_position = state->cols * tick_row + (tick_col + graph_state.win_left_edge_offset + 3);
 		snprintf(lbl, lbl_width + 1, "%02u:%02u", time_large, time_small);
 
 		strncpy(buff + tick_label_position, lbl, lbl_width);
 
-		tick_col += (lbl_width + tick_gap);
+		tick_col += (lbl_width + graph_state.tick_gap_horizontal);
 	}
 }
 
 
 void draw_y_axis(char* buff, State* state, float min, float max) {
-	const int lbl_width = left_edge_offset;
+	const int lbl_width = graph_state.win_left_edge_offset;
 
 	int exponent_min = log10_int(min);
 	int exponent_max = log10_int(max);
 	int exponent = exponent_min > exponent_max ? exponent_min : exponent_max;
 
 	int exponent_label_position = (
-		state->rows - (top_edge_offset + bottom_edge_offset) + 2
+		state->rows - (graph_state.win_top_edge_offset + graph_state.win_bottom_edge_offset) + 2
 		) * state->cols;
 
 	char lbl[lbl_width + 1];
@@ -211,21 +253,21 @@ void draw_y_axis(char* buff, State* state, float min, float max) {
 	strncpy(buff + exponent_label_position, lbl, lbl_width);
 	
 	float val = 0;
-	int tick_row = top_edge_offset;
+	int tick_row = graph_state.win_top_edge_offset;
 	int tick_label_position = 0;
 
-	while (tick_row < state->rows - (top_edge_offset + bottom_edge_offset)) {
+	while (tick_row < state->rows - (graph_state.win_top_edge_offset + graph_state.win_bottom_edge_offset)) {
 		memset(lbl, 0, lbl_width);
 		val = max - (max - min) * (
-			(float)tick_row - (float)top_edge_offset
-			) / (float)graph_rows;
+			(float)tick_row - (float)graph_state.win_top_edge_offset
+			) / (float)graph_state.max_rows;
 
 		tick_label_position = state->cols * tick_row;
 
 		snprintf(lbl, lbl_width + 1, "%+1.2f", val / (float)exp10_int(exponent));
 		strncpy(buff + tick_label_position, lbl, lbl_width);
 
-		tick_row += (1 + tick_gap);
+		tick_row += (1 + graph_state.tick_gap_vertical);
 	}
 
 }
@@ -259,12 +301,12 @@ void draw_vline(char* buff, int pos, int cols, int times, const char c) {
 
 
 void draw_grid(char* buff, State* state, const char c) {
-	// TODO: somehow encapsulate this into state.. this is due to lbl size
-	int additional_gap_horizontal = 5;	
-	for (int i = left_edge_offset;// + additional_gap_horizontal + tick_gap;
+	for (int i = graph_state.win_left_edge_offset;// + additional_gap_horizontal + tick_gap;
 		 i < state->cols; 
-		 i += tick_gap + additional_gap_horizontal) {
-		for (int j = top_edge_offset; j < state->rows; j += tick_gap + 1) {
+		 i += graph_state.tick_gap_horizontal + graph_state.horizontal_axis_lbl_size) {
+		for (int j = graph_state.win_top_edge_offset; 
+			 j < graph_state.max_graph_rows + graph_state.win_top_edge_offset + 1;
+			 j += graph_state.tick_gap_vertical + graph_state.vertical_axis_lbl_size) {
 			buff[state->cols * j + i] = c;
 		}
 	}

@@ -32,7 +32,7 @@ State state = {
 	60,			// time
 	0,			// rows
 	0,			// cols
-	1,		// refresh_period
+	1,		    // refresh_period
 	"NULL",		// pv
 	0,			// data_pos
 	0			// data_size
