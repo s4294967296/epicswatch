@@ -50,7 +50,11 @@ int main(int argc, char **argv) {
 
 	int data_size = state.cols - 10;
 	float data[data_size];
-	memset(data, 0, data_size * sizeof(float));
+	for (int i = 0; i < data_size; i++) {
+		data[i] = 0;
+	}
+
+
 	int data_pos = 0;
 	state.data_size = data_size;
 
