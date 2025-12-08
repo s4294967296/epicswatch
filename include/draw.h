@@ -140,6 +140,7 @@ void draw_data(char* buff, State* state, float data[]) {
 	draw_x_axis(buff, state);
 
 	
+	float previous_bin = 0.0;
 	for (int i = 0; i < len - 1; i++) {
 		pos--;
 		if (pos <= 0) {
@@ -147,9 +148,23 @@ void draw_data(char* buff, State* state, float data[]) {
 		}
 
 		float bin = (data[pos] - min) / ((max - min) / graph_state.max_graph_rows);
-		buff[
-			state->cols * (graph_state.win_top_edge_offset + graph_state.max_graph_rows - (int)bin) + i + graph_state.win_left_edge_offset + 1
-			] = 'x';
+		
+		int marker_pos = state->cols * (graph_state.win_top_edge_offset + graph_state.max_graph_rows - (int)bin) + i + graph_state.win_left_edge_offset + 1;
+		buff[marker_pos] = 'x';
+		
+		int bin_diff = (int)bin - (int)previous_bin;
+		previous_bin = bin;
+
+		if (!i) {
+			continue;
+		}
+		
+		if (bin_diff > 0) {
+			draw_vline(buff, marker_pos, state->cols, bin_diff - 1, '|');
+		} else {
+			draw_vline(buff, marker_pos - state->cols * (-1 * bin_diff), state->cols, -1 * bin_diff - 1, '|');
+		}
+
 	}
 
 
@@ -280,7 +295,7 @@ void clear_stdout() {
 }
 
 void draw_hline(char* buff, int pos, int times, const char c) {
-	if (times == 0) {
+	if (times <= 0) {
 		return;
 	}
 	
@@ -290,7 +305,7 @@ void draw_hline(char* buff, int pos, int times, const char c) {
 }
 
 void draw_vline(char* buff, int pos, int cols, int times, const char c) {
-	if (times == 0) {
+	if (times <= 0) {
 		return;
 	}
 

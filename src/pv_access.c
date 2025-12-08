@@ -42,7 +42,7 @@ float get_pv(const char* pv) {
 
 
 int query_data(State* state, float data[]) {
-	data[state->data_pos] = get_pv(state->pv);
+	data[state->data_pos] = (float)get_pv(state->pv);
 	
 	if ((state->data_pos + 1) == (state->data_size)) {
 		return 0;
