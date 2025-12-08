@@ -1,5 +1,7 @@
 # epicswatch
 
+<img width="1412" height="1040" alt="epicswatch_wave" src="https://github.com/user-attachments/assets/2b9ef8be-a170-4b9a-9350-8c0e6d0b0197" />
+
 ## Overview
 
 The repository **epicswatch** is intended to provide a graphical CLI
