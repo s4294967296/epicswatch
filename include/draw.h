@@ -119,27 +119,18 @@ void draw_data(char* buff, State* state, float data[]) {
 
 	graph_state.max_graph_rows = graph_state.max_rows - graph_state.win_top_edge_offset - graph_state.win_bottom_edge_offset;
 
-	float min = data[0];
-	float max = data[0];
-
-	for (int i = 0; i < len; i++) {
-		if (data[i] < min) {
-			min = data[i];
-		}
-		if (data[i] > max) {
-			max = data[i];
-		}
-	}
+	float min = fminarr(data, len);
+	float max = fmaxarr(data, len);
 
 	if (min == max) {
-		min -= 1;
-		max += 1;
+		min -= 0.5;
+		max += 0.5;
 	}
 
 	draw_y_axis(buff, state, min, max);
 	draw_x_axis(buff, state);
 
-	
+
 	float previous_bin = 0.0;
 	for (int i = 0; i < len - 1; i++) {
 		pos--;
