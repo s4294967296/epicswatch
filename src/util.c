@@ -30,3 +30,38 @@ int exp10_int(int x) {
 	}
 	return exp10_int(x - 1) * 10;
 }
+
+float fminarr(float x[], int n) {
+	if (x == NULL) {
+		printf("fminarr called with NULL ptr arr, exiting");
+		exit(0);
+	}
+
+	float min = x[0];
+
+	for (int i = 1; i < n; i++) {
+		if (x[i] < min) {
+			min = x[i];
+		}
+	}
+
+	return min;
+}
+
+
+float fmaxarr(float x[], int n) {
+	if (x == NULL) {
+		printf("fmaxarr called with NULL ptr arr, exiting");
+		exit(0);
+	}
+
+	float max = x[0];
+
+	for (int i = 1; i < n; i++) {
+		if (x[i] > max) {
+			max = x[i];
+		}
+	}
+
+	return max;
+}
