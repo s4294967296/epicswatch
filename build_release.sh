@@ -4,6 +4,7 @@ gcc -ggdb -std=c99 -D_POSIX_C_SOURCE=200112L -Wall -Wpedantic -Wextra -I$EPICS_B
 
 echo "Setting up .deb" 
 
+mkdir -p epicswatchApp/usr/bin
 cp epicswatch epicswatchApp/usr/bin
 
 echo "Building .deb"
