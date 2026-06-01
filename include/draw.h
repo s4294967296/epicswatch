@@ -45,6 +45,7 @@ void draw_help(State* state);
 void draw_graph(State* state, float data[]);
 
 void draw_header(char* buff, State* state);
+void draw_footer(char* buff, State* state, float data[]);
 void draw_bounds(char* buff, State* state);
 void draw_data(char* buff, State* state, float data[]);
 void draw_x_axis(char* buff, State* state);
@@ -90,6 +91,7 @@ void draw_graph(State* state, float data[]) {
 	
 	draw_header(buff, state);
 	draw_bounds(buff, state);
+    draw_footer(buff, state, data);
 
 	draw_grid(buff, state, '.');
 	draw_data(buff, state, data);
@@ -105,6 +107,60 @@ void draw_header(char* buff, State* state) {
 	char header_str[state->cols + 1];
 	snprintf(header_str, state->cols, "EPICSWATCH WATCH %s", state->pv); 
 	memcpy(buff, header_str, strlen(header_str));
+}
+
+void draw_footer(char* buff, State* state, float data[]) {
+    char footer_str[state->cols + 1];
+    char av_str[state->cols + 1];
+    char var_str[state->cols + 1];
+    char skew_str[state->cols + 1];
+    char kurt_str[state->cols + 1];
+    
+    const float av = favarr(data, state->data_size);
+    const float var = fvararr(data, state->data_size);
+    const float skew = fskewarr(data, state->data_size);
+    const float kurt = fkurtarr(data, state->data_size);
+	
+    const float min = fminarr(data, state->data_size);
+	const float max = fmaxarr(data, state->data_size);
+	const int exponent_min = log10_int(min);
+	const int exponent_max = log10_int(max);
+	const int exponent = exponent_min > exponent_max ? exponent_min : exponent_max;
+    
+    snprintf(av_str, state->cols, "AVERAGE: %+2.2f ", av / (float)exp10_int(exponent));
+    snprintf(var_str, state->cols, "VARIANCE: %+2.2f ", var / (float)exp10_int(exponent));
+    snprintf(skew_str, state->cols, "SKEW: %+2.2f ", skew / (float)exp10_int(exponent));
+    snprintf(kurt_str, state->cols, "KURTOSIS: %+2.2f ", kurt / (float)exp10_int(exponent));
+
+    const int av_str_len = strlen(av_str);
+    const int var_str_len = strlen(var_str);
+    const int skew_str_len = strlen(skew_str);
+    const int kurt_str_len = strlen(kurt_str);
+
+    int aggregate_len = av_str_len;
+    if (aggregate_len > state->cols) {
+        return;
+    }
+    memcpy(buff + (state->cols) * (state->rows - 3) + 2 + aggregate_len - av_str_len, av_str, av_str_len);
+    aggregate_len += var_str_len;
+
+    if (aggregate_len > state->cols) {
+        return;
+    }
+    memcpy(buff + (state->cols) * (state->rows - 3) + 2 + aggregate_len - var_str_len, var_str, var_str_len);
+    aggregate_len += skew_str_len;
+    
+    if (aggregate_len > state->cols) {
+        return;
+    }
+    memcpy(buff + (state->cols) * (state->rows - 3) + 2 + aggregate_len - skew_str_len, skew_str, skew_str_len);
+    aggregate_len += kurt_str_len;
+ 
+    if (aggregate_len > state->cols) {
+        return;
+    }
+    memcpy(buff + (state->cols) * (state->rows - 3) + 2 + aggregate_len - kurt_str_len, kurt_str, kurt_str_len);
+    aggregate_len += av_str_len;
 }
 
 void draw_bounds(char* buff, State* state) {

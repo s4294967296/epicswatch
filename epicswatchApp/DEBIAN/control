@@ -1,5 +1,8 @@
 Package: epicswatch
 Version: 1
+Section: utils
+Priority: optional
+Depends: libc6
 Maintainer: Daniel Tobias Schmid / s4294967296
 Architecture: amd64
 Description: Enable users to observe or monitor changes to EPICS PVs, viewing PV updates in real time, within a terminal. It is intended to be light weight and portable, allowing the user to run it on work stations that may not be suited for rendered graphical interfaces.
