@@ -8,7 +8,7 @@
 
 float get_pv(const char* pv);
 
-int query_data(State* state, float data[]);
+void query_data(State* state, float data[], unsigned int pv_index);
 
 
 #endif

@@ -7,7 +7,9 @@ typedef struct {
 	int rows;
 	int cols;
 	float refresh_period; // seconds
-	const char* pv;
+    unsigned int pv_count;
+	char* pv;
+    char** multi_pvs;
 	int data_pos;
 	int data_size;
 } State;

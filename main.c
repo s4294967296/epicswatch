@@ -26,6 +26,7 @@ void get_key_val(char* str, char** key, char** val);
 void set_state(char* key, char* val);
 
 bool parse_short_long_form(char* str, const char* s, const char* l, bool relaxed);
+void parse_pvs();
 
 State state = {
 	0,			// mode
@@ -33,7 +34,9 @@ State state = {
 	0,			// rows
 	0,			// cols
 	1,		    // refresh_period
-	"NULL",		// pv
+	0,          // pv_count
+    "NULL",		// pv string
+    nullptr,    // multi pv pointers
 	0,			// data_pos
 	0			// data_size
 };
@@ -48,14 +51,12 @@ int main(int argc, char **argv) {
 
 	parse_args(argc, argv);
 
-	int data_size = state.cols - 10;
-	float data[data_size];
-	for (int i = 0; i < data_size; i++) {
+	int data_size = state.cols - graph_state.win_left_edge_offset;
+	float data[data_size * state.pv_count];
+	for (unsigned int i = 0; i < (data_size * state.pv_count); i++) {
 		data[i] = 0;
 	}
 
-
-	int data_pos = 0;
 	state.data_size = data_size;
 
 	int sec = (int)state.refresh_period;
@@ -73,9 +74,17 @@ int main(int argc, char **argv) {
 				return -1;
 			}
 			
-			clear_stdout();
-			
-			state.data_pos = query_data(&state, data);
+            for (unsigned int i = 0; i < state.pv_count; i++) {
+			    query_data(&state, data, i);
+			}
+
+            if ((state.data_pos + 1) == state.data_size) {
+                state.data_pos = 0;
+            } else {
+                state.data_pos += 1;
+            }
+
+            clear_stdout();
 
 			draw_graph(&state, data);
 			
@@ -164,6 +173,34 @@ bool parse_short_long_form(char* str, const char* s, const char* l, bool relaxed
 	return false;
 }
 
+void parse_pvs() {
+    const char delimiter = ',';
+    if (nullptr == strchr(state.pv, delimiter)) {
+        state.pv_count = 1;
+        state.multi_pvs = &state.pv;
+        return;
+    }
+
+    const size_t len = strlen(state.pv);
+    unsigned int pv_count = 0;
+    char** multi_pvs = malloc(len * sizeof(char*));
+    
+    multi_pvs[0] = state.pv;
+
+    for (size_t i = 0; i < len; i++) {
+        if (state.pv[i] == delimiter) {
+            pv_count += 1;
+            multi_pvs[pv_count] = state.pv + i + 1;
+            state.pv[i] = '\0';
+        }
+    }
+
+    state.pv_count = pv_count;
+    state.multi_pvs = multi_pvs;
+
+    return;
+}
+
 void set_state(char* key, char* val) {
 	if (key == nullptr) {return;}
 	
@@ -179,7 +216,8 @@ void set_state(char* key, char* val) {
 		}
 		if (parse_short_long_form(key, "pv", "process_variable", false)) {
 			state.pv = val;
-			goto set_state_ret;
+			parse_pvs(state);
+            goto set_state_ret;
 		}
 		if (parse_short_long_form(key, "p", "period", false)) {
 			state.refresh_period = atof(val);

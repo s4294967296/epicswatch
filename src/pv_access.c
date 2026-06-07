@@ -41,13 +41,8 @@ float get_pv(const char* pv) {
 }
 
 
-int query_data(State* state, float data[]) {
-	data[state->data_pos] = (float)get_pv(state->pv);
-	
-	if ((state->data_pos + 1) == (state->data_size)) {
-		return 0;
-	} else {
-		return state->data_pos + 1;
-	}
+void query_data(State* state, float data[], unsigned int pv_index) {
+    const unsigned int comp_data_pos = state->data_pos + state->data_size * pv_index;
+	data[comp_data_pos] = (float)get_pv(state->multi_pvs[pv_index]);
 }
 

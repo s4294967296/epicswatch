@@ -26,7 +26,9 @@ GraphState graph_state = {
 	1  // vertical_axis_lbl_size
 };
 
-static const char *help_text = 
+static const char* PV_MARKERS = "xo?@*+~#&ß";
+
+static const char* help_text = 
 "EPICSWATCH Help 2025\n"
 "\n"
 "  Watch EPICS process variables and plot them in real time.\n"
@@ -47,7 +49,7 @@ void draw_graph(State* state, float data[]);
 void draw_header(char* buff, State* state);
 void draw_footer(char* buff, State* state, float data[]);
 void draw_bounds(char* buff, State* state);
-void draw_data(char* buff, State* state, float data[]);
+void draw_data(char* buff, State* state, float data[], unsigned int pv_index);
 void draw_x_axis(char* buff, State* state);
 void draw_y_axis(char* buff, State* state, float min, float max);
 
@@ -94,7 +96,9 @@ void draw_graph(State* state, float data[]) {
     draw_footer(buff, state, data);
 
 	draw_grid(buff, state, '.');
-	draw_data(buff, state, data);
+    for (unsigned int i = 0; i < state->pv_count; i++) {
+	    draw_data(buff, state, data, i);
+    }
 
 	for (int i = 0; i < buffsize; i++) {
 		printf("%c", buff[i]);
@@ -126,7 +130,7 @@ void draw_footer(char* buff, State* state, float data[]) {
 	const int exponent_min = log10_int(min);
 	const int exponent_max = log10_int(max);
 	const int exponent = exponent_min > exponent_max ? exponent_min : exponent_max;
-    
+
     snprintf(av_str, state->cols, "AVERAGE: %+2.2f ", av / (float)exp10_int(exponent));
     snprintf(var_str, state->cols, "VARIANCE: %+2.2f ", var / (float)exp10_int(exponent));
     snprintf(skew_str, state->cols, "SKEW: %+2.2f ", skew / (float)exp10_int(exponent));
@@ -169,14 +173,14 @@ void draw_bounds(char* buff, State* state) {
 	draw_vline(buff, state->cols + graph_state.win_left_edge_offset, state->cols, graph_state.max_rows - 6, '|');
 }
 
-void draw_data(char* buff, State* state, float data[]) {
+void draw_data(char* buff, State* state, float data[], unsigned int pv_index) {
 	int pos = state->data_pos;
 	int len = state->data_size;
 
 	graph_state.max_graph_rows = graph_state.max_rows - graph_state.win_top_edge_offset - graph_state.win_bottom_edge_offset;
 
-	float min = fminarr(data, len);
-	float max = fmaxarr(data, len);
+	float min = fminarr(data, len * state->pv_count);
+	float max = fmaxarr(data, len * state->pv_count);
 
 	if (min == max) {
 		min -= 0.5;
@@ -194,10 +198,10 @@ void draw_data(char* buff, State* state, float data[]) {
 			pos = len - 1;
 		}
 
-		float bin = (data[pos] - min) / ((max - min) / graph_state.max_graph_rows);
+		float bin = (data[pos + pv_index * len] - min) / ((max - min) / graph_state.max_graph_rows);
 		
 		int marker_pos = state->cols * (graph_state.win_top_edge_offset + graph_state.max_graph_rows - (int)bin) + i + graph_state.win_left_edge_offset + 1;
-		buff[marker_pos] = 'x';
+		buff[marker_pos] = PV_MARKERS[pv_index % strlen(PV_MARKERS)];
 		
 		int bin_diff = (int)bin - (int)previous_bin;
 		previous_bin = bin;
